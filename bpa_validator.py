@@ -578,9 +578,9 @@ def validate_bpa(
                 extra = line[328:].strip()
                 add_issue(
                     issues,
-                    "error",
+                    "warning",
                     "LEGACY_LINE_OVERFLOW",
-                    "A linha BPA-I legada passou de 328 caracteres; verifique campos finais como e-mail, que no layout tem limite de 40 caracteres.",
+                    "A linha BPA-I legada passou de 328 caracteres. O BPA Magnetico costuma aceitar esse caso quando o excedente vem de campos finais como e-mail; confira se a linha nao ficou deslocada.",
                     line_no,
                     "prd_email_pcnte",
                     extra or str(len(line)),
