@@ -1,0 +1,9 @@
+[project]
+name = "sus-file-validator"
+version = "0.1.0"
+description = "Validador local para arquivos de exportacao SUS, iniciando por BPA/DATASUS."
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
