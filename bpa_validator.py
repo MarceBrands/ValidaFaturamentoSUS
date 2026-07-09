@@ -166,10 +166,28 @@ BPAI_FIELDS = [
 ]
 
 BPAI_LEGACY_FIELDS = BPAI_FIELDS[:36]
+BPAI_CURRENT_LENGTH = 350
+BPAI_LEGACY_LENGTH = 328
+BPAI_SUFFIX_LENGTH = 22
 
 
 def slice_fields(line: str, specs: Sequence[FieldSpec]) -> dict[str, str]:
     return {spec.name: line[spec.start - 1 : spec.end] for spec in specs}
+
+
+def normalize_bpai_line(line: str) -> str:
+    if len(line) <= BPAI_CURRENT_LENGTH:
+        return line
+
+    suffix = line[-BPAI_SUFFIX_LENGTH:]
+    ine = suffix[:10]
+    cpf = suffix[10:21]
+    situacao_rua = suffix[21].strip()
+    if (is_blank(ine) or ine.strip().isdigit()) and cpf.isdigit() and situacao_rua in ALLOWED_SITUACAO_RUA:
+        email = line[288:-BPAI_SUFFIX_LENGTH]
+        return line[:288] + email[:40].ljust(40) + suffix
+
+    return line
 
 
 def add_issue(
@@ -560,22 +578,23 @@ def validate_bpa(
         elif ident == "03":
             issue_start = len(issues)
             counts["bpai"] += 1
-            legacy = len(line) != 350
+            parse_line = normalize_bpai_line(line)
+            legacy = len(parse_line) != BPAI_CURRENT_LENGTH
             if legacy:
                 counts["bpai_legacy"] += 1
-            expected_len = 328 if legacy else 350
+            expected_len = BPAI_LEGACY_LENGTH if legacy else BPAI_CURRENT_LENGTH
             specs = BPAI_LEGACY_FIELDS if legacy else BPAI_FIELDS
-            if legacy and len(line) < 328:
+            if legacy and len(parse_line) < BPAI_LEGACY_LENGTH:
                 add_issue(
                     issues,
                     "warning",
                     "TRAILING_BLANKS_TRIMMED",
                     "A linha BPA-I legada esta menor que 328 caracteres; as posicoes opcionais finais ausentes foram tratadas como brancos.",
                     line_no,
-                    value=str(len(line)),
+                    value=str(len(parse_line)),
                 )
-            elif legacy and len(line) > 328:
-                extra = line[328:].strip()
+            elif legacy and len(parse_line) > BPAI_LEGACY_LENGTH:
+                extra = parse_line[BPAI_LEGACY_LENGTH:].strip()
                 add_issue(
                     issues,
                     "warning",
@@ -583,11 +602,11 @@ def validate_bpa(
                     "A linha BPA-I legada passou de 328 caracteres. O BPA Magnetico costuma aceitar esse caso quando o excedente vem de campos finais como e-mail; confira se a linha nao ficou deslocada.",
                     line_no,
                     "prd_email_pcnte",
-                    extra or str(len(line)),
+                    extra or str(len(parse_line)),
                 )
-            elif len(line) not in {328, 350}:
+            elif len(parse_line) not in {BPAI_LEGACY_LENGTH, BPAI_CURRENT_LENGTH}:
                 add_issue(issues, "error", "LINE_LENGTH", "A linha BPA-I deve ter 328 caracteres no layout legado ou 350 no layout atual, antes da quebra de linha.", line_no, value=str(len(line)))
-            fields = slice_fields(line.ljust(expected_len), specs)
+            fields = slice_fields(parse_line.ljust(expected_len), specs)
             for spec in specs:
                 validate_field(spec, fields[spec.name], line_no, issues)
             validate_common(fields, line_no, issues)

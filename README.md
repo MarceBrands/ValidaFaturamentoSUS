@@ -48,6 +48,7 @@ Na interface e no CSV de erros, as ocorrencias de BPA-I mostram tambem CNS, CPF 
 - Tamanho fixo das linhas: cabecalho 130, BPA-C 48, BPA-I 350 caracteres antes do CRLF.
 - BPA-I legado com 328 caracteres, usado antes dos campos CPF e situacao de rua.
 - Excedente apos a posicao 328 em BPA-I legado vira aviso, pois o BPA Magnetico costuma aceitar quando o excedente vem de campos finais como e-mail.
+- BPA-I atual com e-mail acima de 40 caracteres e lido pelo sufixo final para preservar INE, CPF e situacao de rua, sem gerar ocorrencia quando o BPA Magnetico tambem aceita o registro.
 - Competencia pela extensao mensal do arquivo, por exemplo `.mai` = maio e `.jun` = junho, comparando com a competencia do cabecalho.
 - Tipos numericos e alfabeticos conforme layout.
 - Campos obrigatorios estruturais.
